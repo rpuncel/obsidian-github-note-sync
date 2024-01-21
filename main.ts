@@ -3,11 +3,11 @@ import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Set
 // Remember to rename these classes and interfaces!
 
 interface MyPluginSettings {
-	mySetting: string;
+	ghPAT: string;
 }
 
 const DEFAULT_SETTINGS: MyPluginSettings = {
-	mySetting: 'default'
+	ghPAT: ''
 }
 
 export default class MyPlugin extends Plugin {
@@ -121,13 +121,22 @@ class SampleSettingTab extends PluginSettingTab {
 		containerEl.empty();
 
 		new Setting(containerEl)
-			.setName('Setting #1')
+			.setName('GitHub URL')
+			.setDesc('The base GitHub or GitHub Enterprise URL, e.g. github.com or github.acme.com')
+			.addText(text => text
+				.setValue("https://github.com")
+				.onChange(async (value) => {
+					this.plugin.settings.ghPAT = value;
+					await this.plugin.saveSettings();
+				}));
+		new Setting(containerEl)
+			.setName('GitHub Personal Access Token')
 			.setDesc('It\'s a secret')
 			.addText(text => text
 				.setPlaceholder('Enter your secret')
-				.setValue(this.plugin.settings.mySetting)
+				.setValue(this.plugin.settings.ghPAT)
 				.onChange(async (value) => {
-					this.plugin.settings.mySetting = value;
+					this.plugin.settings.ghPAT = value;
 					await this.plugin.saveSettings();
 				}));
 	}
