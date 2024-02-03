@@ -2,12 +2,22 @@ import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Set
 
 // Remember to rename these classes and interfaces!
 
+class GitHubConnection {
+	server: string
+	pat: string
+
+	constructor(server: string, pat: string) {
+		this.server = server;
+		this.pat = pat;
+	}
+}
+
 interface MyPluginSettings {
-	ghPAT: string;
+	gitHubConnections: GitHubConnection[]
 }
 
 const DEFAULT_SETTINGS: MyPluginSettings = {
-	ghPAT: ''
+	gitHubConnections: []
 }
 
 export default class MyPlugin extends Plugin {
@@ -107,6 +117,37 @@ class SampleModal extends Modal {
 	}
 }
 
+class GitHubServerConfig {
+	plugin: MyPlugin
+	cnx: GitHubConnection
+
+	constructor(plugin: MyPlugin, cnx: GitHubConnection, containerEl: HTMLElement) {
+		this.plugin = plugin
+		this.cnx = cnx
+		new Setting(containerEl)
+			.setName('GitHub URL')
+			.setDesc('The base GitHub or GitHub Enterprise URL, e.g. github.com or github.acme.com')
+			.addText(text => text
+				.setValue(cnx.server)
+				.onChange(async (value) => {
+					console.log(" value changed")
+					cnx.server = value;
+					await this.plugin.saveSettings();
+				}));
+		new Setting(containerEl)
+			.setName('GitHub Personal Access Token')
+			.setDesc('It\'s a secret')
+			.addText(text => text
+				.setPlaceholder('Enter your secret')
+				.setValue(cnx.pat)
+				.onChange(async (value) => {
+				cnx.pat = value;
+					await this.plugin.saveSettings();
+				}));
+
+	}
+}
+
 class SampleSettingTab extends PluginSettingTab {
 	plugin: MyPlugin;
 
@@ -121,23 +162,20 @@ class SampleSettingTab extends PluginSettingTab {
 		containerEl.empty();
 
 		new Setting(containerEl)
-			.setName('GitHub URL')
-			.setDesc('The base GitHub or GitHub Enterprise URL, e.g. github.com or github.acme.com')
-			.addText(text => text
-				.setValue("https://github.com")
-				.onChange(async (value) => {
-					this.plugin.settings.ghPAT = value;
+			.setHeading()
+			.setName("GitHub Servers")
+			.addButton(button => button
+				.setButtonText("Add GitHub server")
+				.onClick(async (_) => {
+					const cnx = new GitHubConnection("https://github.com", "")
+					this.plugin.settings.gitHubConnections.push(cnx)
+					new GitHubServerConfig(this.plugin, cnx, containerEl);
 					await this.plugin.saveSettings();
-				}));
-		new Setting(containerEl)
-			.setName('GitHub Personal Access Token')
-			.setDesc('It\'s a secret')
-			.addText(text => text
-				.setPlaceholder('Enter your secret')
-				.setValue(this.plugin.settings.ghPAT)
-				.onChange(async (value) => {
-					this.plugin.settings.ghPAT = value;
-					await this.plugin.saveSettings();
-				}));
+				})
+			);
+		
+			for (const cnx of this.plugin.settings.gitHubConnections) {
+				new GitHubServerConfig(this.plugin, cnx, containerEl);
+			}
 	}
 }
