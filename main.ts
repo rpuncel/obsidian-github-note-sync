@@ -1,4 +1,4 @@
-import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
+import { App, ButtonComponent, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
 
 // Remember to rename these classes and interfaces!
 
@@ -144,6 +144,27 @@ class GitHubServerConfig {
 				cnx.pat = value;
 					await this.plugin.saveSettings();
 				}));
+		new ButtonComponent(containerEl)
+			.setButtonText("Test Connection")
+			.onClick(async (_) => {
+				console.log("Testing connection to " + cnx.server);
+				try {
+					// Perform authentication and connection test here
+					// For example, you can use the GitHub API to fetch user information
+					const response = await fetch(cnx.server + "/user", {
+						headers: {
+							Authorization: `token ${cnx.pat}`
+						}
+					});
+					if (response.ok) {
+						console.log("Connection successful!");
+					} else {
+						console.log("Connection failed!");
+					}
+				} catch (error) {
+					console.log("An error occurred while testing the connection:", error);
+				}
+			});
 
 	}
 }
