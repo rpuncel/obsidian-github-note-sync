@@ -141,7 +141,7 @@ class GitHubServerConfig {
 				.setPlaceholder('Enter your secret')
 				.setValue(cnx.pat)
 				.onChange(async (value) => {
-				cnx.pat = value;
+					cnx.pat = value;
 					await this.plugin.saveSettings();
 				}));
 		new ButtonComponent(containerEl)
@@ -155,12 +155,22 @@ class GitHubServerConfig {
 						headers: {
 							Authorization: `token ${cnx.pat}`
 						}
+					}).then((response) => {
+						if (response.ok) {
+							const msg = "Connection to " + cnx.server + " successful!"
+							console.log(msg);
+							new Notice(msg)
+						} else {
+							const msg = "Connection to " + cnx.server + " failed!"
+							new Notice(msg)
+							console.log(msg);
+						}
+					}).catch((error) => {
+						const msg = `Connection to ${cnx.server} failed: ${error.message}`;
+						new Notice(msg);
+						console.log(msg);
 					});
-					if (response.ok) {
-						console.log("Connection successful!");
-					} else {
-						console.log("Connection failed!");
-					}
+
 				} catch (error) {
 					console.log("An error occurred while testing the connection:", error);
 				}
@@ -178,7 +188,7 @@ class SampleSettingTab extends PluginSettingTab {
 	}
 
 	display(): void {
-		const {containerEl} = this;
+		const { containerEl } = this;
 
 		containerEl.empty();
 
@@ -194,9 +204,9 @@ class SampleSettingTab extends PluginSettingTab {
 					await this.plugin.saveSettings();
 				})
 			);
-		
-			for (const cnx of this.plugin.settings.gitHubConnections) {
-				new GitHubServerConfig(this.plugin, cnx, containerEl);
-			}
+
+		for (const cnx of this.plugin.settings.gitHubConnections) {
+			new GitHubServerConfig(this.plugin, cnx, containerEl);
+		}
 	}
 }
