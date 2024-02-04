@@ -1,4 +1,4 @@
-import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
+import { App, ButtonComponent, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
 
 // Remember to rename these classes and interfaces!
 
@@ -141,9 +141,40 @@ class GitHubServerConfig {
 				.setPlaceholder('Enter your secret')
 				.setValue(cnx.pat)
 				.onChange(async (value) => {
-				cnx.pat = value;
+					cnx.pat = value;
 					await this.plugin.saveSettings();
 				}));
+		new ButtonComponent(containerEl)
+			.setButtonText("Test Connection")
+			.onClick(async (_) => {
+				console.log("Testing connection to " + cnx.server);
+				try {
+					// Perform authentication and connection test here
+					// For example, you can use the GitHub API to fetch user information
+					const response = await fetch(cnx.server + "/user", {
+						headers: {
+							Authorization: `token ${cnx.pat}`
+						}
+					}).then((response) => {
+						if (response.ok) {
+							const msg = "Connection to " + cnx.server + " successful!"
+							console.log(msg);
+							new Notice(msg)
+						} else {
+							const msg = "Connection to " + cnx.server + " failed!"
+							new Notice(msg)
+							console.log(msg);
+						}
+					}).catch((error) => {
+						const msg = `Connection to ${cnx.server} failed: ${error.message}`;
+						new Notice(msg);
+						console.log(msg);
+					});
+
+				} catch (error) {
+					console.log("An error occurred while testing the connection:", error);
+				}
+			});
 
 	}
 }
@@ -157,7 +188,7 @@ class SampleSettingTab extends PluginSettingTab {
 	}
 
 	display(): void {
-		const {containerEl} = this;
+		const { containerEl } = this;
 
 		containerEl.empty();
 
@@ -173,9 +204,9 @@ class SampleSettingTab extends PluginSettingTab {
 					await this.plugin.saveSettings();
 				})
 			);
-		
-			for (const cnx of this.plugin.settings.gitHubConnections) {
-				new GitHubServerConfig(this.plugin, cnx, containerEl);
-			}
+
+		for (const cnx of this.plugin.settings.gitHubConnections) {
+			new GitHubServerConfig(this.plugin, cnx, containerEl);
+		}
 	}
 }
